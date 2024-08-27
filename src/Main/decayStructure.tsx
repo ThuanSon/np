@@ -29,7 +29,7 @@ const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
   useEffect(() => {
     fetchData(output);
   }, [data]);
-  console.log(resData?.[0]?.[0]?.meta?.id);
+  console.log(resData);
 
   return (
     <div>
@@ -41,19 +41,16 @@ const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
         {resData.map((response, index) => (
           <div key={index}>
             <pre>
-              {response?.[0]?.meta?.id === "a:1"
+              {/* {response?.[0]?.meta?.id === "a:1" || response?.[0]?.meta?.id === 'this:1'
                 ? JSON.stringify(response?.[1]?.fl, null, 2)
-                : JSON.stringify(response?.[0]?.fl, null, 2)}
+                : JSON.stringify(response?.[0]?.fl, null, 2)} */}
+              
+              {
+                `[NP []]`
+              }
             </pre>
-            {/* <pre>
-              {JSON.stringify(response?.[0].fl, null, 2)}
-            </pre> */}
           </div>
         ))}
-        {/* {resData[0]} */}
-        {/* <div>
-          <pre>{JSON.stringify(resData[0][0]['fl'], null, 2)}</pre>
-        </div> */}
       </div>
     </div>
   );
