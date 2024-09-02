@@ -131,11 +131,11 @@ try {
         if (document.getElementById("term-lines").checked)
                 term_lines = true;
         font_size = $("#font-size-slider").slider( "option", "value" );
-        vert_space = $("#vert-space-slider").slider( "option", "value" );
-        hor_space = $("#hor-space-slider").slider( "option", "value" );
+        vert_space = 50;
+        hor_space = 70;
         if (font_size_update) font_size = font_size_update;
-        if (vert_space_update) vert_space = vert_space_update;
-        if (hor_space_update) hor_space = hor_space_update;
+        if (vert_space_update) vert_space = 50;
+        if (hor_space_update) hor_space = 50;
         term_font = term_font + font_size + "pt ";
         nonterm_font = nonterm_font + font_size + "pt ";
         term_font = term_font + $('input:radio[name=font-style]:checked').val();
