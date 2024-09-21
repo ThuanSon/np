@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
-
+import go from "../lib/syntree";
 interface DecayStructureProps {
   data: string;
 }
@@ -8,50 +8,59 @@ interface DecayStructureProps {
 const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
   const [resData, setResData] = useState<any[]>([]);
 
+  // Function to handle and format the input data
   const handleData = () => {
-    const output = data.split(" ").filter((item: string) => item !== "");
-    return output;
+    return data.split(" ").filter((item: string) => item !== "");
   };
 
   const output = handleData();
 
-  const fetchData = async (data: string[]) => {
-    const results = [];
-    for (const item of data) {
-      const res = await axios.get(
-        `https://dictionaryapi.com/api/v3/references/learners/json/${item}?key=68e57a54-8b7f-4122-9b42-5d499eb6eff0`
-      );
-      results.push(res.data);
+  // Function to fetch data from the API
+  const fetchData = async (data: string) => {
+    try {
+      const res = await axios.get(`http://localhost:3001/${data}`);
+      setResData(res.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
-    setResData(results);
   };
 
   useEffect(() => {
-    fetchData(output);
+    fetchData(data); // Fetch data when component is mounted or data prop changes
   }, [data]);
-  console.log(resData);
+
+  useEffect(() => {
+    // Assuming go is a predefined function
+    if (resData.length > 0) {
+      const img = go(
+        resData,
+        14,
+        "italic 14pt sans-serif",
+        "bold 12pt sans-serif",
+        30,
+        20,
+        true,
+        true
+      );
+
+      const imageContainer = document.getElementById("image-goes-here");
+      if (imageContainer) {
+        imageContainer.innerHTML = ""; // Clear existing content
+
+        // Check if img is an HTMLImageElement before appending
+        if (img instanceof HTMLImageElement) {
+          imageContainer.appendChild(img);
+        } else {
+          console.error("Expected an HTMLImageElement but got something else.");
+        }
+      }
+    }
+  }, [resData]); // Trigger this effect when resData is updated
 
   return (
     <div>
-      {output.map((item, index) => (
-        <div key={index}>{item}</div>
-      ))}
-      <div>
-        <h3>API Responses:</h3>
-        {resData.map((response, index) => (
-          <div key={index}>
-            <pre>
-              {/* {response?.[0]?.meta?.id === "a:1" || response?.[0]?.meta?.id === 'this:1'
-                ? JSON.stringify(response?.[1]?.fl, null, 2)
-                : JSON.stringify(response?.[0]?.fl, null, 2)} */}
-              
-              {
-                `[NP []]`
-              }
-            </pre>
-          </div>
-        ))}
-      </div>
+      <div id="image-goes-here"></div>{" "}
+      {/* This will display the generated image */}
     </div>
   );
 };
