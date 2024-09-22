@@ -1,12 +1,22 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 import go from "../lib/syntree";
+import Loader from "../Components/Loader";
+
 interface DecayStructureProps {
   data: string;
 }
 
+interface ApiResponseData {
+  // Define the expected structure of the data returned from the API
+  id: number;
+  content: string;
+  // Add more fields as necessary
+}
+
 const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
-  const [resData, setResData] = useState<any[]>([]);
+  const [resData, setResData] = useState<ApiResponseData[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Function to handle and format the input data
   const handleData = () => {
@@ -17,16 +27,21 @@ const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
 
   // Function to fetch data from the API
   const fetchData = async (data: string) => {
+    setLoading(true);
     try {
       const res = await axios.get(`http://localhost:3001/${data}`);
       setResData(res.data);
     } catch (error) {
       console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData(data); // Fetch data when component is mounted or data prop changes
+    if (data) {
+      fetchData(data); // Fetch data when component is mounted or data prop changes
+    }
   }, [data]);
 
   useEffect(() => {
@@ -55,12 +70,15 @@ const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
         }
       }
     }
-  }, [resData]); // Trigger this effect when resData is updated
+  }, [resData]);
 
   return (
     <div>
-      <div id="image-goes-here"></div>{" "}
-      {/* This will display the generated image */}
+      {loading ? (
+        <p><Loader/></p>
+      ) : (
+        <div id="image-goes-here"></div>
+      )}
     </div>
   );
 };

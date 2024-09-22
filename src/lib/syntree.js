@@ -164,7 +164,7 @@ Node.prototype.draw = function (ctx, font_size, term_font, nonterm_font, color, 
 	if (color) {
 		ctx.fillStyle = "green";
 		if (this.has_children)
-			ctx.fillStyle = "violet";
+			ctx.fillStyle = "#C7262E";
 	}
 
 	ctx.fillText(this.value, this.x, this.y);
@@ -263,7 +263,7 @@ MovementLine.prototype.set_up = function () {
 
 	this.dest_x = this.head.x;
 	this.dest_y = this.head.max_y;
-	this.bottom_y = this.max_y + vert_space;
+	this.bottom_y = this.max_y + 50;
 	this.should_draw = 1;
 	return;
 }
