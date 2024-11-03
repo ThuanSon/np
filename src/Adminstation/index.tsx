@@ -7,8 +7,13 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import Modal from "@mui/material/Modal";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
+import Snackbar from "@mui/material/Snackbar"; // Import Snackbar
+import Alert from "@mui/material/Alert"; // Import Alert for Snackbar styling
+import Dialog from "@mui/material/Dialog"; // Import Dialog for confirmation
+import DialogActions from "@mui/material/DialogActions"; // Import DialogActions for buttons
+import DialogContent from "@mui/material/DialogContent"; // Import DialogContent for the dialog's content
+import DialogTitle from "@mui/material/DialogTitle"; // Import DialogTitle for the dialog's title
 import axios from "axios";
-import { url } from "inspector";
 
 interface RowData {
   id: number;
@@ -36,24 +41,45 @@ export default function DataGridDemo() {
   const [rows, setRows] = React.useState<RowData[]>(initialRows);
   const [open, setOpen] = React.useState(false);
   const [selectedRow, setSelectedRow] = React.useState<RowData | null>(null);
-  // const [words, setWords] = React.useState<RowData[]>(initialRows)
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [rowToDelete, setRowToDelete] = React.useState<number | null>(null);
 
   const fetchWords = async () => {
-    const res = await axios.get(`http://localhost:3001/v1/words/0`);
-
-    console.log(res?.data);
+    const res = await axios.get(`http://localhost:3001/v1/words/0?deleted=0`);
     setRows(res?.data);
   };
+
   React.useEffect(() => {
     fetchWords();
-  }, [rows]);
+  }, []);
+
   const handleEditClick = (row: RowData) => {
     setSelectedRow(row);
     setOpen(true);
   };
 
   const handleDeleteClick = (id: number) => {
-    setRows(rows.filter((row) => row.id !== id));
+    setRowToDelete(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (rowToDelete !== null) {
+      try {
+        await axios.delete(`http://localhost:3001/v1/words/${rowToDelete}`);
+        setRows(rows.filter((row) => row.id !== rowToDelete));
+        setSnackbarMessage("Row successfully deleted!");
+        setSnackbarOpen(true);
+      } catch (error) {
+        console.error("Failed to delete the word:", error);
+        setSnackbarMessage("Failed to delete the row!");
+        setSnackbarOpen(true);
+      }
+    }
+    setDeleteDialogOpen(false);
+    setRowToDelete(null);
   };
 
   const handleClose = () => {
@@ -61,11 +87,18 @@ export default function DataGridDemo() {
     setSelectedRow(null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (selectedRow) {
-      setRows(
-        rows.map((row) => (row.id === selectedRow.id ? selectedRow : row))
-      );
+      try {
+        await axios.put(`http://localhost:3001/v1/words/`, selectedRow);
+        setRows(
+          rows.map((row) => (row.id === selectedRow.id ? selectedRow : row))
+        );
+        setSnackbarMessage("Row successfully edited!");
+        setSnackbarOpen(true);
+      } catch (error) {
+        console.error("Failed to update the word:", error);
+      }
     }
     handleClose();
   };
@@ -74,6 +107,16 @@ export default function DataGridDemo() {
     if (selectedRow) {
       setSelectedRow({ ...selectedRow, [e.target.name]: e.target.value });
     }
+  };
+
+  const handleSnackbarClose = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
   };
 
   const columns: GridColDef[] = [
@@ -111,7 +154,7 @@ export default function DataGridDemo() {
     {
       field: "action",
       headerName: "Action",
-      description: "Edit the row",
+      description: "Edit or delete the row",
       sortable: false,
       width: 160,
       renderCell: (params) => (
@@ -130,20 +173,18 @@ export default function DataGridDemo() {
   ];
 
   return (
-    <Box sx={{ height: 400, width: "100%" }}>
+    <Box sx={{ width: "100%" }}>
       <DataGrid
         rows={rows}
         columns={columns}
         initialState={{
           pagination: {
             paginationModel: {
-              pageSize: 5,
+              pageSize: 20,
             },
           },
         }}
-        pageSizeOptions={[5]}
-        checkboxSelection
-        disableRowSelectionOnClick
+        pageSizeOptions={[20]}
       />
       <Modal open={open} onClose={handleClose}>
         <Box
@@ -217,6 +258,31 @@ export default function DataGridDemo() {
           </Box>
         </Box>
       </Modal>
+
+      {/* Confirmation dialog for delete */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          Are you sure you want to delete this row?
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" sx={{width: '50%'}} onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button variant="outlined" sx={{width: '50%'}} onClick={confirmDelete} color="error">
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for success message */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        <Alert onClose={handleSnackbarClose} severity="success">
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
