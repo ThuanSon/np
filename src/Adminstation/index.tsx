@@ -14,6 +14,7 @@ import DialogActions from "@mui/material/DialogActions"; // Import DialogActions
 import DialogContent from "@mui/material/DialogContent"; // Import DialogContent for the dialog's content
 import DialogTitle from "@mui/material/DialogTitle"; // Import DialogTitle for the dialog's title
 import axios from "axios";
+import { Navigate, useNavigate } from "react-router-dom";
 
 interface RowData {
   id: number;
@@ -38,7 +39,15 @@ const initialRows: RowData[] = [
 ];
 
 export default function DataGridDemo() {
-  const [rows, setRows] = React.useState<RowData[]>(initialRows);
+  const nav = useNavigate();
+  React.useEffect(() => {
+    let ut = localStorage.getItem("user-token");
+    if (!ut || ut === null) {
+      nav("/login");
+    }
+  }, []);
+
+  const [rows, setRows] = React.useState<RowData[]>();
   const [open, setOpen] = React.useState(false);
   const [selectedRow, setSelectedRow] = React.useState<RowData | null>(null);
   const [snackbarOpen, setSnackbarOpen] = React.useState(false);
@@ -47,8 +56,20 @@ export default function DataGridDemo() {
   const [rowToDelete, setRowToDelete] = React.useState<number | null>(null);
 
   const fetchWords = async () => {
-    const res = await axios.get(`http://localhost:3001/v1/words/0?deleted=0`);
-    setRows(res?.data);
+    try {
+      const token = localStorage.getItem("user-token");
+      const res = await axios.get(
+        `http://localhost:3001/v1/words/1?deleted=0`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setRows(res?.data);
+    } catch (error) {
+      console.error("Error fetching words:", error);
+    }
   };
 
   React.useEffect(() => {
@@ -67,9 +88,14 @@ export default function DataGridDemo() {
 
   const confirmDelete = async () => {
     if (rowToDelete !== null) {
+      let token = localStorage.getItem("user-token");
       try {
-        await axios.delete(`http://localhost:3001/v1/words/${rowToDelete}`);
-        setRows(rows.filter((row) => row.id !== rowToDelete));
+        await axios.delete(`http://localhost:3001/v1/words/${rowToDelete}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setRows(rows?.filter((row) => row.id !== rowToDelete));
         setSnackbarMessage("Row successfully deleted!");
         setSnackbarOpen(true);
       } catch (error) {
@@ -90,11 +116,16 @@ export default function DataGridDemo() {
   const handleSave = async () => {
     if (selectedRow) {
       try {
-        await axios.put(`http://localhost:3001/v1/words/`, selectedRow);
+        let token = localStorage.getItem("user-token");
+        const res = await axios.put(`http://localhost:3001/v1/words/`, selectedRow, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setRows(
-          rows.map((row) => (row.id === selectedRow.id ? selectedRow : row))
+          rows?.map((row) => (row.id === selectedRow.id ? selectedRow : row))
         );
-        setSnackbarMessage("Row successfully edited!");
+        setSnackbarMessage(res?.data?.message);
         setSnackbarOpen(true);
       } catch (error) {
         console.error("Failed to update the word:", error);
@@ -121,8 +152,8 @@ export default function DataGridDemo() {
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 90 },
-    { field: "name", headerName: "Name", width: 150, editable: true },
-    { field: "type", headerName: "Type", width: 110, editable: true },
+    { field: "name", headerName: "Name", width: 150 },
+    { field: "type", headerName: "Type", width: 110 },
     {
       field: "expandType",
       headerName: "Expand Type",
@@ -260,14 +291,26 @@ export default function DataGridDemo() {
       </Modal>
 
       {/* Confirmation dialog for delete */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
         <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          Are you sure you want to delete this row?
-        </DialogContent>
+        <DialogContent>Are you sure you want to delete this row?</DialogContent>
         <DialogActions>
-          <Button variant="contained" sx={{width: '50%'}} onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button variant="outlined" sx={{width: '50%'}} onClick={confirmDelete} color="error">
+          <Button
+            variant="contained"
+            sx={{ width: "50%" }}
+            onClick={() => setDeleteDialogOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="outlined"
+            sx={{ width: "50%" }}
+            onClick={confirmDelete}
+            color="error"
+          >
             Delete
           </Button>
         </DialogActions>
