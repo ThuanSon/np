@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TextField, Button, Container, Box, CircularProgress, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,15 +9,15 @@ const Login = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const nav = useNavigate();
-  React.useEffect(() => {
-    let ut = localStorage.getItem('user-token');
-    if (ut && ut === null) {
-      nav('/login');
-    }else{
-        nav('/admin')
+
+  useEffect(() => {
+    const token = localStorage.getItem('user-token');
+    if (token) {
+      nav('/admin');
     }
-  }, []);
-  const handleLogin = async (e: any) => {
+  }, [nav]);
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -29,20 +29,18 @@ const Login = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username: username, password: password }),
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
       setLoading(false);
-      localStorage.setItem('user-token', data?.token)
-      console.log(localStorage.getItem('user-token'));
-      
 
       if (!response.ok) {
         setError(data.message || 'Login failed');
       } else {
         setSuccess(true);
-        localStorage.setItem('token', data.token); // Save JWT token to local storage
+        localStorage.setItem('user-token', data.token); // Store token under a single key
+        nav('/admin'); // Navigate to the admin page after successful login
       }
     } catch (error) {
       setError('An error occurred. Please try again.');

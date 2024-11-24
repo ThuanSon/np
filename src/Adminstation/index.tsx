@@ -15,16 +15,17 @@ import DialogContent from "@mui/material/DialogContent"; // Import DialogContent
 import DialogTitle from "@mui/material/DialogTitle"; // Import DialogTitle for the dialog's title
 import axios from "axios";
 import { Navigate, useNavigate } from "react-router-dom";
+import { FormControl, Grid, InputLabel, MenuItem, Select } from "@mui/material";
 
-interface RowData {
-  id: number;
-  name: string;
-  type: string;
-  expandType: string | null;
-  kind: string;
-  position: number;
-  status: number;
-}
+type RowData = {
+  id?: number; // Optional field
+  name?: string;
+  type?: string;
+  expandType?: string | null;
+  kind?: string;
+  position?: number;
+  status?: number;
+};
 
 const initialRows: RowData[] = [
   {
@@ -40,12 +41,13 @@ const initialRows: RowData[] = [
 
 export default function DataGridDemo() {
   const nav = useNavigate();
+
   React.useEffect(() => {
-    let ut = localStorage.getItem("user-token");
-    if (!ut || ut === null) {
+    const ut = localStorage.getItem("user-token");
+    if (!ut) {
       nav("/login");
     }
-  }, []);
+  }, [nav]);
 
   const [rows, setRows] = React.useState<RowData[]>();
   const [open, setOpen] = React.useState(false);
@@ -54,12 +56,12 @@ export default function DataGridDemo() {
   const [snackbarMessage, setSnackbarMessage] = React.useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [rowToDelete, setRowToDelete] = React.useState<number | null>(null);
-
+  const [isDataChanged, setIsDataChanged] = React.useState(false);
   const fetchWords = async () => {
     try {
       const token = localStorage.getItem("user-token");
       const res = await axios.get(
-        `http://localhost:3001/v1/words/1?deleted=0`,
+        `http://localhost:3001/v1/words/0?deleted=0`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -74,7 +76,7 @@ export default function DataGridDemo() {
 
   React.useEffect(() => {
     fetchWords();
-  }, []);
+  }, [isDataChanged]);
 
   const handleEditClick = (row: RowData) => {
     setSelectedRow(row);
@@ -117,16 +119,22 @@ export default function DataGridDemo() {
     if (selectedRow) {
       try {
         let token = localStorage.getItem("user-token");
-        const res = await axios.put(`http://localhost:3001/v1/words/`, selectedRow, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        selectedRow.status = 1;
+        const res = await axios.put(
+          `http://localhost:3001/v1/words/`,
+          selectedRow,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
         setRows(
           rows?.map((row) => (row.id === selectedRow.id ? selectedRow : row))
         );
         setSnackbarMessage(res?.data?.message);
         setSnackbarOpen(true);
+        setIsDataChanged(!isDataChanged);
       } catch (error) {
         console.error("Failed to update the word:", error);
       }
@@ -134,10 +142,19 @@ export default function DataGridDemo() {
     handleClose();
   };
 
-  const handleFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (selectedRow) {
-      setSelectedRow({ ...selectedRow, [e.target.name]: e.target.value });
-    }
+  // const handleFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   if (selectedRow) {
+  //     setSelectedRow({ ...selectedRow, [e.target.name]: e.target.value });
+  //   }
+  // };
+  const handleFieldChange = (
+    event: React.ChangeEvent<{ name?: string; value: unknown }>
+  ) => {
+    const { name, value } = event.target;
+    setSelectedRow((prev) => ({
+      ...prev,
+      [name!]: value,
+    }));
   };
 
   const handleSnackbarClose = (
@@ -217,76 +234,134 @@ export default function DataGridDemo() {
         }}
         pageSizeOptions={[20]}
       />
-      <Modal open={open} onClose={handleClose}>
+      <Modal open={open} onClose={handleClose}  sx={{}}>
         <Box
           sx={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 400,
+            width: 600,
             bgcolor: "background.paper",
             p: 4,
             boxShadow: 24,
+            borderRadius: "15px",
           }}
         >
-          <h2>Edit Row</h2>
-          <TextField
-            label="Name"
-            name="name"
-            value={selectedRow?.name || ""}
-            onChange={handleFieldChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Type"
-            name="type"
-            value={selectedRow?.type || ""}
-            onChange={handleFieldChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Expand Type"
-            name="expandType"
-            value={selectedRow?.expandType || ""}
-            onChange={handleFieldChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Kind"
-            name="kind"
-            value={selectedRow?.kind || ""}
-            onChange={handleFieldChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Position"
-            name="position"
-            value={selectedRow?.position || ""}
-            onChange={handleFieldChange}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Status"
-            name="status"
-            value={selectedRow?.status || ""}
-            onChange={handleFieldChange}
-            fullWidth
-            margin="normal"
-          />
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-            <Button onClick={handleClose} sx={{ mr: 2 }}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} variant="contained">
-              Save
-            </Button>
-          </Box>
+          <h2>Word Editor</h2>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <TextField
+                label="Name"
+                name="name"
+                value={selectedRow?.name || ""}
+                onChange={handleFieldChange}
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth margin="normal">
+                <InputLabel id="type-select-label">Type</InputLabel>
+                <Select
+                  labelId="type-select-label"
+                  name="type"
+                  value={selectedRow?.type || ""}
+                  onChange={(e) =>
+                    handleFieldChange(e as React.ChangeEvent<HTMLInputElement>)
+                  }
+                >
+                  <MenuItem value="adjective">adjective</MenuItem>
+                  <MenuItem value="noun">noun</MenuItem>
+                  <MenuItem value="verb">verb</MenuItem>
+                  <MenuItem value="adverb">adverb</MenuItem>
+                  <MenuItem value="possessive">possessive</MenuItem>
+                  <MenuItem value="article">article</MenuItem>
+                  <MenuItem value="quantifier">quantifier</MenuItem>
+                  <MenuItem value="preposition">preposition</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Expand Type"
+                name="expandType"
+                value={selectedRow?.expandType || ""}
+                onChange={handleFieldChange}
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl
+                fullWidth
+                margin="normal"
+                disabled={selectedRow?.type !== "adjective"}
+              >
+                <InputLabel id="kind-select-label">
+                  Kind <span>(if is adjective)</span>
+                </InputLabel>
+                <Select
+                  labelId="kind-select-label"
+                  name="kind"
+                  value={selectedRow?.kind || ""}
+                  onChange={(e) =>
+                    handleFieldChange(e as React.ChangeEvent<HTMLInputElement>)
+                  }
+                >
+                  <MenuItem value="opinion">opinion</MenuItem>
+                  <MenuItem value="size">size</MenuItem>
+                  <MenuItem value="age">age</MenuItem>
+                  <MenuItem value="shape">shape</MenuItem>
+                  <MenuItem value="color">color</MenuItem>
+                  <MenuItem value="origin">origin</MenuItem>
+                  <MenuItem value="material">material</MenuItem>
+                  <MenuItem value="purpose">purpose</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                label="Position"
+                name="position"
+                value={selectedRow?.position || ""}
+                onChange={handleFieldChange}
+                fullWidth
+                margin="normal"
+              />
+            </Grid>
+            {/* <Grid item xs={12} md={6}>
+              <TextField
+                label="Status"
+                name="status"
+                type="checkbox"
+                value={selectedRow?.status || ""}
+                onChange={handleFieldChange}
+                fullWidth
+                margin="normal"
+              />
+            </Grid> */}
+            <Grid item xs={12} md={6}>
+              <Button
+                fullWidth
+                onClick={handleClose}
+                color="error"
+                variant="outlined"
+                sx={{ mr: 2 }}
+              >
+                Cancel
+              </Button>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Button fullWidth onClick={handleSave} variant="contained">
+                Admit
+              </Button>
+            </Grid>
+          </Grid>
+
+          {/* <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}> */}
+
+          {/* </Box> */}
         </Box>
       </Modal>
 
