@@ -1,5 +1,6 @@
 // By Miles Shang <mail@mshang.ca>
 // MIT license
+// import { log } from "console";
 import Canvas2Image from "./canvas2image";
 
 var debug = true;
@@ -47,19 +48,27 @@ Node.prototype.set_siblings = function (parent) {
 		this.children[i].previous = this.children[i - 1];
 }
 
-Node.prototype.check_triangle = function () {
-	if (this && this.starred) {
-		// Safe to access node.starred
-		this.draw_triangle = 0;
-		if ((!this.has_children) && (this.parent.starred))
-			this.draw_triangle = 1;
+// Node.prototype.check_triangle = function () {
+// 	if (this && this.starred) {
+// 		// Safe to access node.starred
+// 		this.draw_triangle = false;
+// 		if ((!this.has_children) && (this.parent.starred))
+// 			this.draw_triangle = true;
 
-		for (var child = this.first; child != null; child = child.next)
-			child.check_triangle();
-	} else {
-		console.error("Node or starred property is null");
-	}
+// 		for (var child = this.first; child != null; child = child.next)
+// 			child.check_triangle();
+// 	} else {
+// 		console.error("Node or starred property is null");
+// 	}
 
+// }
+Node.prototype.check_triangle = function() {
+	this.draw_triangle = 0;
+	if ((!this.has_children) && (this.parent.starred))
+		this.draw_triangle = 1;
+
+	for (var child = this.first; child != null; child = child.next)
+		child.check_triangle();
 }
 
 Node.prototype.set_width = function (ctx, vert_space, hor_space, term_font, nonterm_font) {
@@ -181,7 +190,7 @@ Node.prototype.draw = function (ctx, font_size, term_font, nonterm_font, color, 
 		ctx.stroke();
 		return;
 	}
-
+	console.log('this.draw_triangle', this.value, this.draw_triangle)
 	if ((!this.has_children) && (!term_lines) && (this.parent.children.length == 1)) return;
 
 	ctx.moveTo(this.parent.x, this.parent.y + padding_below_text);
@@ -349,7 +358,6 @@ export default function go(str, font_size, term_font, nonterm_font, vert_space, 
 
 	var root = parse(str); // parse(str): Node(), phân tích chuỗi và tạo thành Node
 	root.set_siblings(null);
-	root.check_triangle();
 
 	var canvas;
 	var ctx;
@@ -394,6 +402,8 @@ export default function go(str, font_size, term_font, nonterm_font, vert_space, 
 	var x_shift = Math.floor(root.left_width + margin);
 	var y_shift = Math.floor(font_size + margin);
 	ctx.translate(x_shift, y_shift);
+	root.check_triangle();
+	console.log('root.check_triangle(), ', root.check_triangle())
 
 	root.draw(ctx, font_size, term_font, nonterm_font, color, term_lines);
 	for (var i = 0; i < movement_lines.length; i++)
@@ -447,12 +457,16 @@ function parse(str) {
 	// i = 3 tại thời điểm này, str[i] = " "
 	n.value = str.substr(1, i - 1) // 'NP'
 	// Lấy giá trị của nút từ ký tự thứ hai đến trước ký tự `i`, loại bỏ dấu ngoặc vuông ở đầu.
-
+	console.log('n.value ', n.value)
 	n.value = n.value.replace(/\^/,
 		function () {
 			n.starred = true;
+			
 			return "";
 		});
+	console.log('n.value ', n.value)
+	console.log('n.starred ', n.starred)
+
 	// Nếu giá trị của nút chứa ký tự '^', loại bỏ ký tự này và đánh dấu nút với thuộc tính `starred`
 
 	n.value = n.value.replace(/_(\w+)$/,

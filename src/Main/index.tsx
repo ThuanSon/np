@@ -7,14 +7,27 @@ import DecayStructure from "./decayStructure";
 
 export const Main: React.FC = () => {
   const [inputContent, setInputContent] = useState<string>("");
-  const [outputContent, setOutputContent] = useState<string>("");
+  const [outputContent, setOutputContent] = useState<string[]>([]);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const IContainer = document.getElementById("image");
+    if (IContainer) {
+      IContainer.innerHTML = "";
+    }
     setInputContent(event.target.value);
   };
+  let dataSplited = inputContent.split(",").map((d) => d.trim());
+  console.log("dataSplited", dataSplited);
+
+  // dataSplited.forEach((item) => {
+  //   if (item === "") {
+  //     dataSplited.slice;
+  //   }
+  // });
+  console.log("dataSplited", dataSplited);
 
   const handleButtonClick = () => {
-    setOutputContent(inputContent);
+    setOutputContent(dataSplited);
   };
 
   return (
@@ -38,6 +51,19 @@ export const Main: React.FC = () => {
             value={inputContent}
             onChange={handleInputChange}
           />
+
+          <div style={{ lineHeightStep: 4, paddingTop: "50px" }}>
+            <i>
+              * The field above allows multiple Noun Phrase inputs separated by
+              a comma ","
+            </i>
+            <br />
+            <i>
+              * If there are two couples of compound nouns or more, must use "-"
+              to connect two nouns to represent the relationship (ex: the
+              child-poverty action-group)
+            </i>
+          </div>
         </Grid>
         <Grid item xs={12} sm={12} md={2} lg={2} xl={2}>
           <Button
@@ -45,7 +71,7 @@ export const Main: React.FC = () => {
             sx={{
               color: "white",
               // backgroundColor: "#FFDE01",
-              background: 'linear-gradient(142deg, #d49279 30%, #efca91 70%)',
+              background: "linear-gradient(142deg, #d49279 30%, #efca91 70%)",
             }}
             fullWidth
             onClick={handleButtonClick}

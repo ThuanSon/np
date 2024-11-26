@@ -4,11 +4,10 @@ import go from "../lib/syntree";
 import Loader from "../Components/Loader";
 
 interface DecayStructureProps {
-  data: string;
+  data: string[];
 }
 
 interface ApiResponseData {
-  // Define the expected structure of the data returned from the API
   id: number;
   content: string;
   // Add more fields as necessary
@@ -20,33 +19,38 @@ const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
 
   // Function to handle and format the input data
   const handleData = () => {
-    return data.split(" ").filter((item: string) => item !== "");
+    return data.map((d) => d.split(" ").filter((item: string) => item !== ""));
   };
 
-  const output = handleData();
+  const output = handleData(); // Processed data (returns an array of arrays)
 
   // Function to fetch data from the API
   const fetchData = async (data: string) => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`http://localhost:3001/${data}`);
-      setResData(res.data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
+    if (data !== "") {
+      setLoading(true);
+      try {
+        const res = await axios.get(`http://localhost:3001/${data}`);
+        setResData(res.data); // Set the response data
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      alert("There's emty value, miss it?");
     }
   };
 
   useEffect(() => {
     if (data) {
-      fetchData(data); // Fetch data when component is mounted or data prop changes
+      // Fetch data when the component is mounted or data prop changes
+      data.forEach((d) => fetchData(d));
     }
   }, [data]);
 
   useEffect(() => {
-    // Assuming go is a predefined function
     if (resData.length > 0) {
+      // Assuming go is a predefined function that generates an image
       const img = go(
         resData,
         14,
@@ -58,26 +62,42 @@ const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
         true
       );
 
-      const imageContainer = document.getElementById("image-goes-here");
-      if (imageContainer) {
-        imageContainer.innerHTML = ""; // Clear existing content
+      // Iterate through data and append the image to the corresponding element
+      data.forEach((a) => {
+        const imageContainer = document.getElementById(a);
+        const errorContainer = document.getElementById(`${a}-error`); // Use a separate error container
 
-        // Check if img is an HTMLImageElement before appending
-        if (img instanceof HTMLImageElement) {
-          imageContainer.appendChild(img);
-        } else {
-          console.error("Expected an HTMLImageElement but got something else.");
+        if (imageContainer) {
+          if (img instanceof HTMLImageElement) {
+            imageContainer.appendChild(img); // Append the image if it's a valid image element
+          } else {
+            // Show error message if something goes wrong
+            if (errorContainer) {
+              errorContainer.innerHTML =
+                "Something went wrong, please try again";
+            }
+          }
         }
-      }
+      });
     }
-  }, [resData]);
+  }, [resData, data]);
 
   return (
     <div>
       {loading ? (
-        <p><Loader/></p>
+        <Loader /> // Show loader while fetching data
       ) : (
-        <div id="image-goes-here"></div>
+        <div id="image-">
+          {data.map((d) => (
+            <div >
+              <div key={d} id={d}></div>
+              <div
+                id={`${d}-error`}
+                style={{ color: "red", fontWeight: "bold" }}
+              ></div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
