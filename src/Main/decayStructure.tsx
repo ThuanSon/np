@@ -29,7 +29,7 @@ const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
     if (data !== "") {
       setLoading(true);
       try {
-        const res = await axios.get(`http://localhost:3001/${data}`);
+        const res = await axios.get(`https://api-np.onrender.com/${data}`);
         setResData(res.data); // Set the response data
       } catch (error) {
         console.error("Error fetching data:", error);

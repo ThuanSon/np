@@ -61,7 +61,7 @@ export default function DataGridDemo() {
     try {
       const token = localStorage.getItem("user-token");
       const res = await axios.get(
-        `http://localhost:3001/v1/words/0?deleted=0`,
+        `https://api-np.onrender.com/words/0?deleted=0`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -92,7 +92,7 @@ export default function DataGridDemo() {
     if (rowToDelete !== null) {
       let token = localStorage.getItem("user-token");
       try {
-        await axios.delete(`http://localhost:3001/v1/words/${rowToDelete}`, {
+        await axios.delete(`https://api-np.onrender.com/words/${rowToDelete}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -121,7 +121,7 @@ export default function DataGridDemo() {
         let token = localStorage.getItem("user-token");
         selectedRow.status = 1;
         const res = await axios.put(
-          `http://localhost:3001/v1/words/`,
+          `https://api-np.onrender.com/words/`,
           selectedRow,
           {
             headers: {
