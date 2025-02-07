@@ -1,7 +1,14 @@
-import React, { lazy, useState } from "react";
-import { Grid, OutlinedInput, Button, Typography } from "@mui/material";
+import React, { useState } from "react";
+import {
+  Grid,
+  OutlinedInput,
+  Button,
+  Typography,
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
-import Loadable from "../Components/Loadable";
+import ClearIcon from "@mui/icons-material/Clear";
 import DecayStructure from "./decayStructure";
 // const DecayStructure = Loadable((lazy(()=> import('./decayStructure'))))
 
@@ -29,7 +36,17 @@ export const Main: React.FC = () => {
   const handleButtonClick = () => {
     setOutputContent(dataSplited);
   };
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      handleButtonClick();
+    }
+  };
+  const handleClearClick = () => {
+    setInputContent("");
+    setOutputContent([]);
+    document.getElementsByName('inputContent')[0].focus()
 
+  };
   return (
     <>
       <Grid
@@ -49,7 +66,16 @@ export const Main: React.FC = () => {
             // multiline
             name="inputContent"
             value={inputContent}
+            autoFocus
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            endAdornment={
+              <InputAdornment position="end">
+                <IconButton onClick={handleClearClick}>
+                  <ClearIcon />
+                </IconButton>
+              </InputAdornment>
+            }
           />
 
           <div style={{ lineHeightStep: 4, paddingTop: "50px" }}>
@@ -94,7 +120,7 @@ export const Main: React.FC = () => {
           }}
         >
           {/* <OutlinedInput fullWidth value={outputContent} /> */}
-          <Typography>
+          <Typography >
             <DecayStructure data={outputContent} />
           </Typography>
         </Grid>

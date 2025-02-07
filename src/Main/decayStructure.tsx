@@ -16,6 +16,8 @@ interface ApiResponseData {
 const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
   const [resData, setResData] = useState<ApiResponseData[]>([]);
   const [loading, setLoading] = useState(false);
+  const [spellCheck, setSpellCheck] = useState(true);
+  const [fixedWord, setFixedWord] = useState("");
 
   // Function to handle and format the input data
   const handleData = () => {
@@ -29,8 +31,11 @@ const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
     if (data !== "") {
       setLoading(true);
       try {
-        const res = await axios.get(`https://api-np.onrender.com/${data}`);
-        setResData(res.data); // Set the response data
+        const res = await axios.get(`http://localhost:3001/${data}`);
+        // const res = await axios.get(`https://api-np.onrender.com/${data}`);
+        setResData(res.data?.message); // Set the response data
+        setSpellCheck(res?.data?.spellcheck);
+        setFixedWord(res?.data?.fixedWord);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -82,22 +87,39 @@ const DecayStructure: React.FC<DecayStructureProps> = ({ data }) => {
     }
   }, [resData, data]);
 
+  const checkSpell = () => {
+    return (
+      <>
+        {spellCheck || fixedWord === "fail to check spell"  || fixedWord === undefined? (
+          <div></div>
+        ) : (
+          <div>
+            <span>Here is the correct ordered word: </span>
+            <i>{'"' + fixedWord + '"'}</i>
+          </div>
+        )}
+      </>
+    );
+  };
   return (
     <div>
       {loading ? (
         <Loader /> // Show loader while fetching data
       ) : (
-        <div id="image-">
-          {data.map((d) => (
-            <div >
-              <div key={d} id={d}></div>
-              <div
-                id={`${d}-error`}
-                style={{ color: "red", fontWeight: "bold" }}
-              ></div>
-            </div>
-          ))}
-        </div>
+        <>
+          <div id="image">
+            {checkSpell()}
+            {data.map((d) => (
+              <div>
+                <div key={d} id={d}></div>
+                <div
+                  id={`${d}-error`}
+                  style={{ color: "red", fontWeight: "bold" }}
+                ></div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
